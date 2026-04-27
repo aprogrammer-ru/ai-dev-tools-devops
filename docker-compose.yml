@@ -1,0 +1,48 @@
+services:
+  counter-api:
+    build:
+      context: ./services/counter-api
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_DSN: postgresql+asyncpg://postgres:postgres@postgres:5432/counter
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+
+  counter-api-dotnet:
+    build:
+      context: ./services/counter-api-dotnet
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_CONNECTION_STRING: Host=postgres;Port=5432;Database=counter;Username=postgres;Password=postgres
+      REDIS_CONNECTION_STRING: redis:6379
+      IDEMPOTENCY_TTL_SECONDS: 3600
+      RATE_LIMIT_WINDOW_SECONDS: 60
+      RATE_LIMIT_MAX_REQUESTS: 120
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: counter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.13.4
+    volumes:
+      - ./infra/helm/observability/logstash-pipeline.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    ports:
+      - "5044:5044"

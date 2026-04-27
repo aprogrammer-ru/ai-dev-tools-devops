@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: counter-api-config
+  namespace: counter-system
+data:
+  APP_ENV: "prod"
+  METRICS_ENABLED: "true"
+  RATE_LIMIT_WINDOW_SECONDS: "60"
+  RATE_LIMIT_MAX_REQUESTS: "120"

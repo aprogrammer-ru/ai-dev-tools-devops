@@ -1,0 +1,27 @@
+name: cd
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types: [completed]
+
+jobs:
+  deploy:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.YC_KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+      - name: Deploy
+        run: |
+          kubectl apply -k infra/k8s/overlays/prod
+          kubectl -n counter-system set image deployment/counter-api counter-api=cr.yandex/${{ secrets.YC_REGISTRY_ID }}/counter-api:${{ github.event.workflow_run.head_sha }}
+          kubectl -n counter-system rollout status deployment/counter-api --timeout=180s

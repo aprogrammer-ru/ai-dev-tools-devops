@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: counter-api
+  namespace: counter-system
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: counter.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: counter-api
+                port:
+                  number: 80
