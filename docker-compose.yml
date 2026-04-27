@@ -15,7 +15,7 @@ services:
     build:
       context: ./services/counter-api-dotnet
     ports:
-      - "8080:8080"
+      - "5080:5080"
     environment:
       POSTGRES_CONNECTION_STRING: Host=postgres;Port=5432;Database=counter;Username=postgres;Password=postgres
       REDIS_CONNECTION_STRING: redis:6379
@@ -46,3 +46,20 @@ services:
       - ./infra/helm/observability/logstash-pipeline.conf:/usr/share/logstash/pipeline/logstash.conf:ro
     ports:
       - "5044:5044"
+
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    depends_on:
+      - logstash
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - loki
